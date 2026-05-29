@@ -1,125 +1,262 @@
-import { useEffect, useState } from 'react'
+import { useState, useCallback } from 'react'
+import { Search, SlidersHorizontal, TrendingUp, Zap, Users, Code2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { Sparkles, Zap, GitBranch, Users, ArrowRight, Star, TrendingUp } from 'lucide-react'
-import { fetchStats, fetchIssues } from '../api/issues'
 import IssueCard from '../components/IssueCard'
-import { IssueSkeleton } from '../components/Skeleton'
-import { useAuth } from '../context/AuthContext'
+import { SkeletonGrid } from '../components/Skeleton'
+import EmptyState from '../components/EmptyState'
+import { useApi } from '../hooks/useApi'
+
+const LANGS = ['All', 'JavaScript', 'Python', 'TypeScript', 'Go', 'Rust', 'Java', 'C++']
+const DIFFS = ['All', 'Beginner', 'Intermediate', 'Advanced']
+
+const STATS = [
+  { icon: Code2,    label: 'Open Issues',   value: '12,400+' },
+  { icon: Users,    label: 'Contributors',   value: '8,300+'  },
+  { icon: TrendingUp, label: 'Repos Indexed', value: '2,100+' },
+  { icon: Zap,      label: 'AI Matches',     value: '94%'     },
+]
 
 export default function HomePage() {
-  const { user, login } = useAuth()
-  const [stats, setStats]   = useState(null)
+  const [query, setQuery]   = useState('')
+  const [lang, setLang]     = useState('All')
+  const [diff, setDiff]     = useState('All')
   const [issues, setIssues] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [searched, setSearched] = useState(false)
+  const { loading, error, get } = useApi()
 
-  useEffect(() => {
-    Promise.all([fetchStats(), fetchIssues({ limit: 6, sort: 'quality' })])
-      .then(([s, i]) => { setStats(s); setIssues(i.results || []) })
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
+  const search = useCallback(async () => {
+    if (!query.trim()) return
+    setSearched(true)
+    try {
+      const params = { search: query }
+      if (lang !== 'All') params.language = lang
+      if (diff !== 'All') params.difficulty = diff.toLowerCase()
+      const data = await get('/api/issues', params)
+      setIssues(data.results || data.issues || [])
+    } catch {}
+  }, [query, lang, diff, get])
+
+  const handleKey = (e) => {
+    if (e.key === 'Enter') search()
+  }
 
   return (
-    <div className="max-w-5xl mx-auto px-5 py-10 page-enter">
+    <div>
       {/* Hero */}
-      <section className="text-center mb-14">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-600/15 border border-brand-500/25 text-brand-300 text-xs font-medium mb-6">
-          <Sparkles size={12} />
-          AI-Powered Open Source Discovery
-        </div>
-
-        <h1 className="font-display text-5xl md:text-6xl font-800 text-white mb-5 leading-tight tracking-tight">
-          Find your first{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-accent-400">
-            contribution
-          </span>
-        </h1>
-
-        <p className="text-lg text-white/50 max-w-xl mx-auto leading-relaxed mb-8">
-          Discover beginner-friendly open source issues matched to your skills,
-          powered by semantic AI search and GitHub intelligence.
-        </p>
-
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <Link to="/explore" className="btn-primary text-base px-6 py-3">
-            <Zap size={16} />
-            Start Exploring
-          </Link>
-          {!user && (
-            <button onClick={login} className="btn-ghost border border-white/10 text-white/70 hover:text-white px-6 py-3 rounded-xl text-sm">
-              Sign in with GitHub
-            </button>
-          )}
-        </div>
-      </section>
-
-      {/* Stats */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-14">
-        {[
-          { label: 'Open Issues',  value: stats?.total_issues,  icon: GitBranch, color: 'text-brand-400' },
-          { label: 'Repositories', value: stats?.total_repos,   icon: Star,      color: 'text-yellow-400' },
-          { label: 'Contributors', value: stats?.total_users,   icon: Users,     color: 'text-accent-400' },
-          { label: 'Languages',    value: stats?.languages?.length, icon: TrendingUp, color: 'text-pink-400' },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="stat-card">
-            <Icon size={18} className={`${color} mb-2`} />
-            <span className="font-display text-3xl font-700 text-white">
-              {value != null ? value.toLocaleString() : '—'}
+      <section style={{
+        background: 'linear-gradient(180deg, #f0f7ff 0%, #ffffff 100%)',
+        borderBottom: '1px solid var(--border-soft)',
+        padding: '72px 24px 64px',
+        textAlign: 'center',
+      }}>
+        <div style={{ maxWidth: 680, margin: '0 auto' }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: 'var(--brand-soft)',
+            border: '1px solid rgba(15,98,254,0.2)',
+            borderRadius: 99, padding: '5px 14px',
+            marginBottom: 28,
+          }}>
+            <img src="/logo.png" alt="" style={{ height: 16, width: 'auto' }} />
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--brand)', letterSpacing: '0.03em' }}>
+              AI-POWERED OSS DISCOVERY
             </span>
-            <span className="text-xs text-white/40 mt-0.5">{label}</span>
           </div>
-        ))}
+
+          <h1 style={{
+            fontSize: 'clamp(36px, 6vw, 58px)',
+            lineHeight: 1.1,
+            color: 'var(--text)',
+            marginBottom: 18,
+            letterSpacing: '-0.03em',
+          }}>
+            Find your next<br />
+            <span style={{ color: 'var(--brand)', fontStyle: 'italic' }}>open-source</span> adventure
+          </h1>
+
+          <p style={{
+            fontSize: 17, color: 'var(--text-3)', lineHeight: 1.7,
+            maxWidth: 480, margin: '0 auto 40px',
+          }}>
+            Discover beginner-friendly issues, AI-curated projects, and contribution paths tailored to your skills.
+          </p>
+
+          {/* Search bar */}
+          <div style={{ position: 'relative', maxWidth: 560, margin: '0 auto 12px' }}>
+            <Search size={18} style={{
+              position: 'absolute', left: 18, top: '50%',
+              transform: 'translateY(-50%)', color: 'var(--text-4)',
+              pointerEvents: 'none',
+            }} />
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Search issues, repos, languages…"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              onKeyDown={handleKey}
+              style={{ paddingLeft: 50, paddingRight: 130 }}
+            />
+            <button
+              className="btn-primary"
+              onClick={search}
+              disabled={loading}
+              style={{
+                position: 'absolute', right: 8, top: '50%',
+                transform: 'translateY(-50%)',
+                padding: '8px 18px', fontSize: 14,
+                opacity: loading ? 0.7 : 1,
+              }}
+            >
+              {loading ? 'Searching…' : 'Search'}
+            </button>
+          </div>
+
+          {/* Quick links */}
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+            {['good first issue', 'help wanted', 'documentation', 'bug'].map(tag => (
+              <button key={tag} onClick={() => { setQuery(tag); }}
+                style={{
+                  background: 'none', border: '1px solid var(--border)',
+                  borderRadius: 99, padding: '4px 12px',
+                  fontSize: 12, color: 'var(--text-3)', cursor: 'pointer',
+                  transition: 'all 0.15s', fontFamily: 'var(--font-body)',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand)'; e.currentTarget.style.color = 'var(--brand)' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-3)' }}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        </div>
       </section>
 
-      {/* Featured Issues */}
-      <section>
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="font-display text-xl font-700 text-white">Top Quality Issues</h2>
-          <Link to="/explore" className="flex items-center gap-1 text-sm text-brand-400 hover:text-brand-300">
-            View all <ArrowRight size={13} />
-          </Link>
+      {/* Stats strip */}
+      <section style={{
+        borderBottom: '1px solid var(--border-soft)',
+        padding: '20px 24px',
+        background: '#fff',
+      }}>
+        <div style={{
+          maxWidth: 1200, margin: '0 auto',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+          gap: 1,
+        }}>
+          {STATS.map(({ icon: Icon, label, value }) => (
+            <div key={label} style={{
+              display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px',
+            }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: 'var(--brand-soft)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <Icon size={16} color="var(--brand)" strokeWidth={2} />
+              </div>
+              <div>
+                <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', lineHeight: 1.2 }}>{value}</p>
+                <p style={{ fontSize: 12, color: 'var(--text-4)' }}>{label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Results */}
+      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '36px 24px' }}>
+
+        {/* Filters */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          marginBottom: 28, flexWrap: 'wrap',
+        }}>
+          <SlidersHorizontal size={15} color="var(--text-4)" />
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {LANGS.map(l => (
+              <button key={l}
+                onClick={() => setLang(l)}
+                style={{
+                  padding: '5px 12px', borderRadius: 99, fontSize: 13,
+                  fontFamily: 'var(--font-body)', cursor: 'pointer',
+                  border: lang === l ? '1px solid var(--brand)' : '1px solid var(--border)',
+                  background: lang === l ? 'var(--brand-soft)' : 'transparent',
+                  color: lang === l ? 'var(--brand)' : 'var(--text-3)',
+                  transition: 'all 0.15s',
+                }}
+              >{l}</button>
+            ))}
+          </div>
+          <div style={{ width: 1, height: 20, background: 'var(--border-soft)', margin: '0 4px' }} />
+          <div style={{ display: 'flex', gap: 6 }}>
+            {DIFFS.map(d => (
+              <button key={d}
+                onClick={() => setDiff(d)}
+                style={{
+                  padding: '5px 12px', borderRadius: 99, fontSize: 13,
+                  fontFamily: 'var(--font-body)', cursor: 'pointer',
+                  border: diff === d ? '1px solid var(--brand)' : '1px solid var(--border)',
+                  background: diff === d ? 'var(--brand-soft)' : 'transparent',
+                  color: diff === d ? 'var(--brand)' : 'var(--text-3)',
+                  transition: 'all 0.15s',
+                }}
+              >{d}</button>
+            ))}
+          </div>
         </div>
 
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array(6).fill(0).map((_, i) => <IssueSkeleton key={i} />)}
+        {/* Content */}
+        {loading && <SkeletonGrid count={6} />}
+
+        {error && (
+          <div style={{
+            background: '#fff1f2', border: '1px solid #fecdd3',
+            borderRadius: 12, padding: '16px 20px',
+            color: '#be123c', fontSize: 14,
+          }}>
+            {error} — please check your backend is running.
           </div>
-        ) : issues.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {issues.map(issue => <IssueCard key={issue.id} issue={issue} />)}
-          </div>
-        ) : (
-          <div className="card p-10 text-center text-white/30">
-            <GitBranch size={32} className="mx-auto mb-3 opacity-30" />
-            <p className="text-sm">No issues yet — run the fetch script to populate the database.</p>
-            <code className="block mt-3 text-xs bg-white/5 px-3 py-2 rounded-lg text-brand-300 font-mono">
-              python scripts/fetch_issues.py
-            </code>
+        )}
+
+        {!loading && !error && searched && issues.length === 0 && (
+          <EmptyState
+            icon={Search}
+            title="No issues found"
+            description="Try a different search term, language, or difficulty level."
+          />
+        )}
+
+        {!loading && !error && issues.length > 0 && (
+          <>
+            <p style={{ fontSize: 13, color: 'var(--text-4)', marginBottom: 16 }}>
+              {issues.length} issues found
+            </p>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+              gap: 16,
+            }}>
+              {issues.map((issue, i) => (
+                <IssueCard key={issue.id || i} issue={issue} />
+              ))}
+            </div>
+          </>
+        )}
+
+        {!loading && !searched && (
+          <div style={{ textAlign: 'center', padding: '60px 24px' }}>
+            <p style={{ fontSize: 14, color: 'var(--text-4)', marginBottom: 16 }}>
+              Or browse curated AI-powered project suggestions
+            </p>
+            <Link to="/build" className="btn-primary" style={{ textDecoration: 'none' }}>
+              <Zap size={15} />
+              Try AI Project Builder
+            </Link>
           </div>
         )}
       </section>
-
-      {/* Languages bar */}
-      {stats?.languages?.length > 0 && (
-        <section className="mt-14">
-          <h2 className="font-display text-xl font-700 text-white mb-5">Issues by Language</h2>
-          <div className="card p-5">
-            <div className="flex flex-wrap gap-3">
-              {stats.languages.map(({ language, count }) => (
-                <Link
-                  key={language}
-                  to={`/explore?language=${language}`}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group"
-                >
-                  <span className="w-2 h-2 rounded-full bg-accent-400/70" />
-                  <span className="text-sm text-white/70 group-hover:text-white">{language}</span>
-                  <span className="text-xs text-white/30 tabular-nums">{count}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
     </div>
   )
 }

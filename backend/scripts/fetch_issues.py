@@ -21,21 +21,36 @@ HEADERS = {
 }
 
 REPOS = [
+    # JavaScript / TypeScript
     "facebook/react",
-    "tiangolo/fastapi",
-    "django/django",
     "vercel/next.js",
     "microsoft/vscode",
     "tailwindlabs/tailwindcss",
     "vuejs/vue",
     "sveltejs/svelte",
-    "prisma/prisma",
-    "supabase/supabase",
-    "trpc/trpc",
-    "remix-run/remix",
-    "astro-build/astro",
     "vitejs/vite",
     "axios/axios",
+    # Python
+    "tiangolo/fastapi",
+    "django/django",
+    "pallets/flask",
+    "psf/requests",
+    "numpy/numpy",
+    "pandas-dev/pandas",
+    "scikit-learn/scikit-learn",
+    # Go
+    "golang/go",
+    "gin-gonic/gin",
+    "gofiber/fiber",
+    # Rust
+    "rust-lang/rust",
+    "tokio-rs/tokio",
+    # Java
+    "spring-projects/spring-boot",
+    # Other
+    "supabase/supabase",
+    "trpc/trpc",
+    "prisma/prisma",
 ]
 
 BEGINNER_LABELS = [
@@ -53,8 +68,11 @@ def compute_difficulty(labels: list[str]) -> str:
     for bl in BEGINNER_LABELS:
         if bl in labels_lower:
             return "beginner"
-    if "intermediate" in labels_lower or "medium" in labels_lower:
+    if any(x in labels_lower for x in ["advanced", "hard", "complex", "expert", "senior"]):
+        return "advanced"
+    if any(x in labels_lower for x in ["intermediate", "medium", "moderate"]):
         return "intermediate"
+    # default based on comment count — more comments = more complex
     return "intermediate"
 
 def compute_quality_score(repo_data: dict, issue_data: dict) -> float:

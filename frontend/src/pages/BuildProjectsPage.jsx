@@ -1,324 +1,214 @@
-import { useState, useEffect } from "react";
+import { useState } from 'react'
+import { Sparkles, Send, RotateCcw, Lightbulb } from 'lucide-react'
+import AIProjectCard from '../components/AIProjectCard'
+import { SkeletonGrid } from '../components/Skeleton'
+import EmptyState from '../components/EmptyState'
 
-const API_BASE = "http://localhost:8000";
+const PROMPTS = [
+  'I want to contribute to a Python data science project',
+  'Show me beginner-friendly JavaScript repos',
+  'Find me a Rust systems project with good docs',
+  'I know React and want to help with open source tools',
+]
 
 export default function BuildProjectsPage() {
-  const [difficulty, setDifficulty] = useState("beginner");
+  const [prompt, setPrompt] = useState('')
+  const [projects, setProjects] = useState([])
+  const [asked, setAsked] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
-  const [q, setQ] = useState("");
-  const [currentLang, setCurrentLang] = useState("JavaScript");
-
-  const [repos, setRepos] = useState([]);
-  const [summary, setSummary] = useState("");
-  const [total, setTotal] = useState(0);
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  // AI Suggestions
-  const [suggestedProjects, setSuggestedProjects] = useState([]);
-  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
-
-  // Modal
-  const [selectedProject, setSelectedProject] = useState(null);
-
-  // AUTO FETCH AI SUGGESTIONS
-  useEffect(() => {
-    fetchAISuggestions();
-  }, [currentLang, difficulty]);
-
-  async function fetchAISuggestions() {
+  const ask = async (text) => {
+    const q = (text || prompt).trim()
+    if (!q) return
+    
+    setAsked(true)
+    setPrompt(q)
+    setLoading(true)
+    setError(null)
+    
     try {
-      setSuggestionsLoading(true);
-
-      const res = await fetch(
-        `${API_BASE}/api/projects/ai-suggestions?skill=${encodeURIComponent(
-          currentLang
-        )}&difficulty=${difficulty}`
-      );
-
-      if (!res.ok) {
-        throw new Error("Failed to fetch AI suggestions");
+      // Use the correct API URL based on environment
+      const apiUrl = '/api/projects/ai-suggest'
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt: q })
+      })
+      
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`)
       }
-
-      const data = await res.json();
-
-      setSuggestedProjects(data.projects || []);
-    } catch (err) {
-      console.error(err);
+      
+      const data = await response.json()
+      setProjects(data.projects || data || [])
+    } catch (error) {
+      console.error('API Error:', error)
+      setError(`Failed to fetch projects: ${error.message}`)
+      setProjects([])
     } finally {
-      setSuggestionsLoading(false);
+      setLoading(false)
     }
   }
 
-  async function doSearch() {
-    if (!q.trim()) return;
-
-    try {
-      setLoading(true);
-      setError("");
-
-      // SEARCH API
-      const res = await fetch(
-        `${API_BASE}/api/projects/search?q=${encodeURIComponent(
-          q
-        )}&language=${encodeURIComponent(
-          currentLang
-        )}&difficulty=${difficulty}`
-      );
-
-      if (!res.ok) {
-        throw new Error("Failed to fetch projects");
-      }
-
-      const data = await res.json();
-
-      setRepos(data.repos || []);
-      setTotal(data.total || 0);
-
-      // REPO LIST
-      const repoList = (data.repos || [])
-        .map((r) => r.full_name)
-        .join(",");
-
-      // AI SUMMARY
-      const summaryRes = await fetch(
-        `${API_BASE}/api/projects/ai-summary?query=${encodeURIComponent(
-          q
-        )}&repos=${encodeURIComponent(
-          repoList
-        )}&difficulty=${difficulty}`
-      );
-
-      if (!summaryRes.ok) {
-        throw new Error("Failed to generate AI summary");
-      }
-
-      const summaryData = await summaryRes.json();
-
-      setSummary(summaryData.text || "");
-    } catch (err) {
-      console.error(err);
-      setError(err.message || "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  }
+  const handleKey = (e) => { if (e.key === 'Enter') ask() }
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
-      <h1 className="text-4xl font-bold mb-6">
-        Build Open Source Projects
-      </h1>
+    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 24px' }}>
 
-      {/* SEARCH BAR */}
-      <div className="flex gap-4 mb-6">
-        <input
-          type="text"
-          placeholder="Search project ideas..."
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          className="flex-1 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 outline-none"
-        />
-
-        <select
-          value={currentLang}
-          onChange={(e) => setCurrentLang(e.target.value)}
-          className="px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700"
-        >
-          <option>JavaScript</option>
-          <option>Python</option>
-          <option>Java</option>
-          <option>TypeScript</option>
-          <option>Go</option>
-        </select>
-
-        <select
-          value={difficulty}
-          onChange={(e) => setDifficulty(e.target.value)}
-          className="px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700"
-        >
-          <option value="beginner">Beginner</option>
-          <option value="intermediate">Intermediate</option>
-          <option value="advanced">Advanced</option>
-        </select>
-
-        <button
-          onClick={doSearch}
-          className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500"
-        >
-          Search
-        </button>
+      {/* Header */}
+      <div style={{ marginBottom: 40, maxWidth: 640 }}>
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          background: 'linear-gradient(135deg, #ebf2ff, #f0fff4)',
+          border: '1px solid rgba(15,98,254,0.2)',
+          borderRadius: 99, padding: '5px 14px', marginBottom: 16,
+        }}>
+          <Sparkles size={12} color="var(--brand)" />
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--brand)', letterSpacing: '0.03em' }}>
+            AI PROJECT BUILDER
+          </span>
+        </div>
+        <h1 style={{ fontSize: 'clamp(28px, 4vw, 40px)', color: 'var(--text)', marginBottom: 12 }}>
+          Tell me what you want to build
+        </h1>
+        <p style={{ fontSize: 15, color: 'var(--text-3)', lineHeight: 1.7 }}>
+          Describe your skills, interests, or the kind of contribution you want to make — our AI will find the perfect open-source project for you.
+        </p>
       </div>
 
-      {/* ERROR */}
-      {error && (
-        <div className="bg-red-500/20 border border-red-500 text-red-300 p-4 rounded-xl mb-6">
-          {error}
-        </div>
-      )}
-
-      {/* LOADING */}
-      {loading && (
-        <div className="text-zinc-400 mb-6">
-          Loading projects...
-        </div>
-      )}
-
-      {/* AI SUGGESTIONS */}
-      {repos.length === 0 && (
-        <div className="mb-10">
-          <h2 className="text-2xl font-bold mb-6">
-            🤖 AI Suggested Projects
-          </h2>
-
-          {suggestionsLoading ? (
-            <div className="text-zinc-400">
-              Generating AI suggestions...
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 gap-6">
-              {suggestedProjects.map((project, index) => (
-                <div
-                  key={index}
-                  onClick={() => setSelectedProject(project)}
-                  className="bg-zinc-900 border border-zinc-800 hover:border-indigo-500 transition p-6 rounded-2xl cursor-pointer"
-                >
-                  <h3 className="text-2xl font-semibold mb-3">
-                    {project.title}
-                  </h3>
-
-                  <div className="flex gap-3 mb-4">
-                    <span className="bg-indigo-600 px-3 py-1 rounded-full text-sm">
-                      {project.level}
-                    </span>
-
-                    <span className="bg-green-600 px-3 py-1 rounded-full text-sm">
-                      {project.realWorld} Real-World
-                    </span>
-                  </div>
-
-                  <p className="text-zinc-400">
-                    {project.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* TOTAL */}
-      {repos.length > 0 && (
-        <div className="mb-6 text-zinc-400">
-          Found {total} repositories
-        </div>
-      )}
-
-      {/* AI SUMMARY */}
-      {summary && (
-        <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl mb-8">
-          <h2 className="text-2xl font-semibold mb-4">
-            AI Summary
-          </h2>
-
-          <pre className="whitespace-pre-wrap text-zinc-300">
-            {summary}
-          </pre>
-        </div>
-      )}
-
-      {/* REPOS */}
-      <div className="grid gap-6">
-        {repos.map((repo) => (
-          <div
-            key={repo.id}
-            className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-2xl font-semibold">
-                {repo.full_name}
-              </h2>
-
-              <a
-                href={repo.html_url}
-                target="_blank"
-                rel="noreferrer"
-                className="text-indigo-400 hover:text-indigo-300"
-              >
-                View Repo →
-              </a>
-            </div>
-
-            <p className="text-zinc-400 mb-4">
-              {repo.description}
-            </p>
-
-            <div className="flex gap-6 text-sm text-zinc-500">
-              <span>⭐ {repo.stargazers_count}</span>
-              <span>🍴 {repo.forks_count}</span>
-              <span>🐛 {repo.open_issues_count}</span>
-              <span>{repo.language}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* MODAL */}
-      {selectedProject && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-          <div className="bg-zinc-900 w-[750px] max-h-[80vh] overflow-auto p-8 rounded-2xl border border-zinc-800">
-            <h2 className="text-3xl font-bold mb-4">
-              {selectedProject.title}
-            </h2>
-
-            <p className="text-zinc-300 mb-6">
-              {selectedProject.description}
-            </p>
-
-            <div className="flex gap-4 mb-6">
-              <span className="bg-indigo-600 px-3 py-1 rounded-full">
-                {selectedProject.level}
-              </span>
-
-              <span className="bg-green-600 px-3 py-1 rounded-full">
-                {selectedProject.realWorld} Real-World
-              </span>
-            </div>
-
-            <h3 className="text-2xl font-semibold mb-4">
-              Top GitHub Repositories
-            </h3>
-
-            <div className="space-y-3">
-              {selectedProject.repos?.map((repo, idx) => (
-                <a
-                  key={idx}
-                  href={repo.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="block bg-zinc-800 hover:bg-zinc-700 transition p-4 rounded-xl"
-                >
-                  <div className="font-semibold">
-                    {repo.name}
-                  </div>
-
-                  <div className="text-sm text-zinc-400">
-                    ⭐ {repo.stars}
-                  </div>
-                </a>
-              ))}
-            </div>
-
+      {/* Prompt input */}
+      <div style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--border-soft)',
+        borderRadius: 16,
+        padding: '20px',
+        marginBottom: 32,
+      }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
+          <textarea
+            value={prompt}
+            onChange={e => setPrompt(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask() } }}
+            placeholder="e.g. I'm a Python developer who wants to contribute to machine learning tools…"
+            rows={3}
+            style={{
+              flex: 1,
+              background: '#fff',
+              border: '1px solid var(--border)',
+              borderRadius: 10,
+              padding: '12px 14px',
+              fontFamily: 'var(--font-body)',
+              fontSize: 14,
+              color: 'var(--text)',
+              outline: 'none',
+              resize: 'none',
+              lineHeight: 1.6,
+              transition: 'border-color 0.15s, box-shadow 0.15s',
+            }}
+            onFocus={e => {
+              e.target.style.borderColor = 'var(--brand)'
+              e.target.style.boxShadow = '0 0 0 3px rgba(15,98,254,0.1)'
+            }}
+            onBlur={e => {
+              e.target.style.borderColor = 'var(--border)'
+              e.target.style.boxShadow = 'none'
+            }}
+          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <button
-              onClick={() => setSelectedProject(null)}
-              className="mt-8 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl"
+              className="btn-primary"
+              onClick={() => ask()}
+              disabled={loading || !prompt.trim()}
+              style={{ opacity: (loading || !prompt.trim()) ? 0.6 : 1, padding: '11px 18px' }}
             >
-              Close
+              <Send size={15} />
+              {loading ? 'Finding…' : 'Find Projects'}
             </button>
+            {asked && (
+              <button
+                className="btn-secondary"
+                onClick={() => { 
+                  setProjects([]); 
+                  setAsked(false); 
+                  setPrompt(''); 
+                  setError(null); 
+                }}
+                style={{ padding: '10px 18px', fontSize: 13 }}
+              >
+                <RotateCcw size={13} /> Reset
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Suggestion chips */}
+        {!asked && (
+          <div style={{ marginTop: 16 }}>
+            <p style={{ fontSize: 12, color: 'var(--text-4)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
+              <Lightbulb size={12} /> Try one of these
+            </p>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {PROMPTS.map(p => (
+                <button key={p}
+                  onClick={() => ask(p)}
+                  style={{
+                    background: '#fff',
+                    border: '1px solid var(--border)',
+                    borderRadius: 99, padding: '6px 14px',
+                    fontSize: 12, color: 'var(--text-2)', cursor: 'pointer',
+                    fontFamily: 'var(--font-body)', transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand)'; e.currentTarget.style.color = 'var(--brand)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-2)' }}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Results */}
+      {loading && <SkeletonGrid count={3} />}
+
+      {error && (
+        <div style={{
+          background: '#fff1f2', border: '1px solid #fecdd3',
+          borderRadius: 12, padding: '16px 20px', color: '#be123c', fontSize: 14,
+        }}>
+          {error} — make sure your backend and AI route are running.
+        </div>
+      )}
+
+      {!loading && asked && projects.length === 0 && !error && (
+        <EmptyState
+          icon={Sparkles}
+          title="No projects found"
+          description="Try rephrasing your prompt or being more specific about your skills."
+        />
+      )}
+
+      {!loading && projects.length > 0 && (
+        <>
+          <p style={{ fontSize: 13, color: 'var(--text-4)', marginBottom: 20 }}>
+            {projects.length} AI-curated projects for you
+          </p>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
+            gap: 20,
+          }}>
+            {projects.map((p, i) => (
+              <AIProjectCard key={p.id || i} project={p} index={i} />
+            ))}
+          </div>
+        </>
       )}
     </div>
-  );
+  )
 }

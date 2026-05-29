@@ -1,29 +1,36 @@
-export function IssueSkeleton() {
+export function SkeletonCard() {
   return (
-    <div className="card p-5 flex flex-col gap-3">
-      <div className="flex items-center gap-2">
-        <div className="h-5 w-24 rounded-full shimmer" />
-        <div className="h-5 w-16 rounded-full shimmer" />
+    <div className="card" style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div className="shimmer" style={{ height: 22, width: 72, borderRadius: 99 }} />
+        <div className="shimmer" style={{ height: 22, width: 56, borderRadius: 99 }} />
       </div>
-      <div className="h-4 w-full rounded shimmer" />
-      <div className="h-4 w-3/4 rounded shimmer" />
-      <div className="flex gap-2 mt-1">
-        <div className="h-4 w-20 rounded-full shimmer" />
-        <div className="h-4 w-16 rounded-full shimmer" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="shimmer" style={{ height: 18, width: '85%' }} />
+        <div className="shimmer" style={{ height: 18, width: '60%' }} />
       </div>
-      <div className="flex justify-between mt-2 pt-2 border-t border-white/5">
-        <div className="h-3 w-16 rounded shimmer" />
-        <div className="h-3 w-12 rounded shimmer" />
+      <div className="shimmer" style={{ height: 44, borderRadius: 8 }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <div className="shimmer" style={{ height: 14, width: 40 }} />
+          <div className="shimmer" style={{ height: 14, width: 40 }} />
+        </div>
+        <div className="shimmer" style={{ height: 34, width: 96, borderRadius: 8 }} />
       </div>
     </div>
   )
 }
 
-export function StatSkeleton() {
+export function SkeletonGrid({ count = 6 }) {
   return (
-    <div className="stat-card">
-      <div className="h-7 w-16 rounded shimmer mb-1" />
-      <div className="h-3 w-24 rounded shimmer" />
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+      gap: 16,
+    }}>
+      {Array.from({ length: count }).map((_, i) => (
+        <SkeletonCard key={i} />
+      ))}
     </div>
   )
 }

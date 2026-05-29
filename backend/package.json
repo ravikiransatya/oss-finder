@@ -1,0 +1,23 @@
+{
+  "name": "oss-finder-ai-agent",
+  "version": "1.0.0",
+  "description": "Agentic AI Development Assistant for OSS Finder",
+  "main": "ai_server.js",
+  "scripts": {
+    "start": "node ai_server.js",
+    "dev": "nodemon ai_server.js",
+    "install-deps": "npm install"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.24.3",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

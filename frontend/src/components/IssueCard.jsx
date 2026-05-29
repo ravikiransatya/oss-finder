@@ -1,133 +1,129 @@
-import { ExternalLink, Star, MessageCircle, Bookmark, BookmarkCheck } from 'lucide-react'
-import { useAuth } from '../context/AuthContext'
-import { addBookmark } from '../api/issues'
-import { useState } from 'react'
+import { Star, GitFork, ExternalLink, Bookmark, BookmarkCheck, MessageSquare } from 'lucide-react'
+import { useBookmarks } from '../hooks/useBookmarks'
 
-const LABEL_STYLES = {
-  'good first issue': 'bg-accent-500/15 text-accent-400 border-accent-500/25',
-  'bug':              'bg-red-500/15 text-red-400 border-red-500/25',
-  'documentation':    'bg-blue-500/15 text-blue-300 border-blue-500/25',
-  'help wanted':      'bg-yellow-500/15 text-yellow-400 border-yellow-500/25',
-  'enhancement':      'bg-purple-500/15 text-purple-300 border-purple-500/25',
-  'feature':          'bg-pink-500/15 text-pink-300 border-pink-500/25',
-}
-const getLabelStyle = (label) =>
-  LABEL_STYLES[label.toLowerCase()] ?? 'bg-white/8 text-white/50 border-white/10'
-
-const DIFF_STYLES = {
-  beginner:     'tag-beginner',
-  intermediate: 'tag-intermediate',
-  advanced:     'tag-advanced',
+const DIFF_CLASS = {
+  beginner:     'badge tag-beginner',
+  intermediate: 'badge tag-intermediate',
+  advanced:     'badge tag-advanced',
 }
 
-function timeAgo(dateStr) {
-  if (!dateStr) return ''
-  const diff = Date.now() - new Date(dateStr).getTime()
-  const days = Math.floor(diff / 86400000)
-  if (days < 1) return 'today'
-  if (days < 7) return `${days}d ago`
-  if (days < 30) return `${Math.floor(days / 7)}w ago`
-  return `${Math.floor(days / 30)}mo ago`
-}
+export default function IssueCard({ issue }) {
+  const { isBookmarked, toggle } = useBookmarks()
+  const bookmarked = isBookmarked(issue.id)
 
-export default function IssueCard({ issue, onBookmark }) {
-  const { user, token } = useAuth()
-  const [bookmarked, setBookmarked] = useState(false)
-  const [saving, setSaving] = useState(false)
-
-  const handleBookmark = async (e) => {
-    e.preventDefault()
-    if (!user || !token) return
-    setSaving(true)
-    try {
-      await addBookmark(token, issue)
-      setBookmarked(true)
-      onBookmark?.()
-    } catch (_) {}
-    setSaving(false)
-  }
+  const diff = (issue.difficulty || 'beginner').toLowerCase()
 
   return (
-    <article className="card p-5 flex flex-col gap-3 group animate-fade-in">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="badge bg-brand-600/20 text-brand-300 border border-brand-500/20 truncate max-w-[160px]">
-            {issue.repo?.split('/')[1] ?? issue.repo}
-          </span>
-          {issue.difficulty && (
-            <span className={DIFF_STYLES[issue.difficulty] ?? 'badge bg-white/10 text-white/50'}>
-              {issue.difficulty}
+    <div className="card" style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+      {/* Top row */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span className={DIFF_CLASS[diff] || 'badge badge-gray'}>
+              {diff.charAt(0).toUpperCase() + diff.slice(1)}
             </span>
-          )}
+            {issue.labels?.slice(0, 2).map(label => (
+              <span key={label} className="badge badge-blue">{label}</span>
+            ))}
+          </div>
+          <h3 style={{
+            fontSize: 15, fontWeight: 500, fontFamily: 'var(--font-body)',
+            color: 'var(--text)', lineHeight: 1.4,
+            overflow: 'hidden', display: '-webkit-box',
+            WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+          }}>
+            {issue.title}
+          </h3>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs text-white/30">{timeAgo(issue.created_at)}</span>
-          {user && (
-            <button
-              onClick={handleBookmark}
-              disabled={saving || bookmarked}
-              className="text-white/30 hover:text-brand-400 transition-colors disabled:opacity-50"
-              title="Bookmark"
-            >
-              {bookmarked ? <BookmarkCheck size={15} className="text-brand-400" /> : <Bookmark size={15} />}
-            </button>
-          )}
-        </div>
+
+        <button
+          onClick={() => toggle(issue)}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            padding: 6, borderRadius: 8,
+            color: bookmarked ? 'var(--brand)' : 'var(--text-4)',
+            transition: 'all 0.15s', flexShrink: 0,
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = 'var(--surface)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'none'}
+          title={bookmarked ? 'Remove bookmark' : 'Save issue'}
+        >
+          {bookmarked ? <BookmarkCheck size={17} /> : <Bookmark size={17} />}
+        </button>
       </div>
 
-      {/* Title */}
-      <h3 className="font-display font-600 text-white/90 text-sm leading-snug line-clamp-2 flex-1">
-        {issue.title}
-      </h3>
-
-      {/* Labels */}
-      {issue.labels?.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {issue.labels.slice(0, 3).map(label => (
-            <span key={label} className={`badge border ${getLabelStyle(label)}`}>
-              {label}
-            </span>
-          ))}
-          {issue.labels.length > 3 && (
-            <span className="badge bg-white/5 text-white/30 border border-white/8">
-              +{issue.labels.length - 3}
-            </span>
-          )}
-        </div>
+      {/* Description */}
+      {issue.body && (
+        <p style={{
+          fontSize: 13, color: 'var(--text-3)', lineHeight: 1.6,
+          overflow: 'hidden', display: '-webkit-box',
+          WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+        }}>
+          {issue.body}
+        </p>
       )}
 
-      {/* Footer */}
-      <div className="flex items-center justify-between pt-1 border-t border-white/5 mt-auto">
-        <div className="flex items-center gap-3 text-white/30 text-xs">
-          {issue.language && (
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-accent-400/60" />
-              {issue.language}
+      {/* Repo info */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        padding: '10px 12px',
+        background: 'var(--surface)',
+        borderRadius: 8,
+      }}>
+        {issue.repo_avatar && (
+          <img
+            src={issue.repo_avatar}
+            alt=""
+            style={{ width: 18, height: 18, borderRadius: 4, flexShrink: 0 }}
+          />
+        )}
+        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-2)', flex: 1, minWidth: 0 }}>
+          {issue.repo_full_name || issue.repo}
+        </span>
+        {issue.language && (
+          <span className="badge badge-gray" style={{ fontSize: 11 }}>{issue.language}</span>
+        )}
+      </div>
+
+      {/* Footer row */}
+      <div style={{
+        display: 'flex', alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingTop: 2,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          {issue.stars != null && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-4)' }}>
+              <Star size={12} strokeWidth={2} />
+              {issue.stars?.toLocaleString()}
             </span>
           )}
-          {issue.stars > 0 && (
-            <span className="flex items-center gap-1">
-              <Star size={11} />
-              {issue.stars >= 1000 ? `${(issue.stars/1000).toFixed(1)}k` : issue.stars}
+          {issue.forks != null && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-4)' }}>
+              <GitFork size={12} strokeWidth={2} />
+              {issue.forks?.toLocaleString()}
             </span>
           )}
-          {issue.comment_count > 0 && (
-            <span className="flex items-center gap-1">
-              <MessageCircle size={11} />
-              {issue.comment_count}
+          {issue.comments != null && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-4)' }}>
+              <MessageSquare size={12} strokeWidth={2} />
+              {issue.comments}
             </span>
           )}
         </div>
+
         <a
-          href={issue.url}
+          href={issue.url || issue.html_url}
           target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1 text-xs text-brand-400 hover:text-brand-300 font-medium transition-colors"
+          rel="noreferrer"
+          className="btn-primary"
+          style={{ padding: '7px 14px', fontSize: 13, textDecoration: 'none' }}
         >
-          View <ExternalLink size={11} />
+          View Issue
+          <ExternalLink size={13} />
         </a>
       </div>
-    </article>
+    </div>
   )
 }

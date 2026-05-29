@@ -86,6 +86,25 @@ def update_bookmark(
     db.refresh(bm)
     return bookmark_to_dict(bm)
 
+from pydantic import BaseModel
+from typing import Optional, List
+
+class BookmarkIds(BaseModel):
+    ids: List[int]
+
+@router.delete("/bookmarks/bulk")
+def delete_bookmarks_bulk(
+    body:         BookmarkIds,
+    db:           Session = Depends(get_db),
+    current_user: User    = Depends(get_current_user),
+):
+    db.query(Bookmark).filter(
+        Bookmark.id.in_(body.ids),
+        Bookmark.user_id == current_user.id,
+    ).delete(synchronize_session=False)
+    db.commit()
+    return {"deleted": len(body.ids)}
+
 @router.delete("/bookmarks/{bookmark_id}")
 def delete_bookmark(
     bookmark_id:  int,
