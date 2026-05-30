@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Zap, Eye, EyeOff, CheckCircle } from 'lucide-react'
+import API_BASE_URL from '../config/api';
 
 export default function ResetPasswordPage() {
   const [password, setPassword]   = useState('')
@@ -21,7 +22,7 @@ export default function ResetPasswordPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch('/api/auth/reset-password', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, password }),

@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Zap, Eye, EyeOff, AlertCircle, Mail } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import API_BASE_URL from '../config/api';
 
-const API_BASE = '/api'
+
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 48 48">
@@ -215,7 +216,7 @@ export default function LoginPage() {
                 type="button"
                 style={socialBtn}
                 onClick={() => {
-                  fetch('/api/auth/google').then(r => r.json()).then(d => window.location.href = d.url)
+                  fetch(`${API_BASE_URL}/api/auth/google`).then(r => r.json()).then(d => window.location.href = d.url)
                 }}
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--surface)'}
                 onMouseLeave={e => e.currentTarget.style.background = '#fff'}

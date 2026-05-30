@@ -3,6 +3,7 @@ import { Sparkles, Send, RotateCcw, Lightbulb } from 'lucide-react'
 import AIProjectCard from '../components/AIProjectCard'
 import { SkeletonGrid } from '../components/Skeleton'
 import EmptyState from '../components/EmptyState'
+import API_BASE_URL from '../config/api';
 
 const PROMPTS = [
   'I want to contribute to a Python data science project',
@@ -29,7 +30,7 @@ export default function BuildProjectsPage() {
     
     try {
       // Use the correct API URL based on environment
-      const apiUrl = '/api/projects/ai-suggest'
+      const apiUrl = `${API_BASE_URL}/api/projects/ai-suggest`
       
       const response = await fetch(apiUrl, {
         method: 'POST',

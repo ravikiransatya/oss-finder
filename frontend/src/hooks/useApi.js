@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
+import API_BASE_URL from '../config/api';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API = API_BASE_URL
 
 // Demo data for when backend is not available
 const DEMO_ISSUES = [

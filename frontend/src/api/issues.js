@@ -1,4 +1,6 @@
-const BASE = '/api'
+import API_BASE_URL from '../config/api';
+
+const BASE = `${API_BASE_URL}/api`
 
 const authHeaders = (token) =>
   token ? { Authorization: `Bearer ${token}` } : {}

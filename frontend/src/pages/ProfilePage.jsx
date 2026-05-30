@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { Link, useNavigate } from 'react-router-dom'
+import API_BASE_URL from '../config/api';
 import { 
   LogOut, Settings, Github, CheckCircle, Star, ExternalLink, X, 
   Calendar, MapPin, Link as LinkIcon, Trophy, Target, 
@@ -40,7 +41,7 @@ export default function ProfilePage() {
     if (!user?.token) return
     
     // Fetch profile data
-    fetch('/api/user/profile', {
+    fetch(`${API_BASE_URL}/api/user/profile`, {
       headers: { 'Authorization': `Bearer ${user.token}` }
     })
       .then(r => r.json())
@@ -52,7 +53,7 @@ export default function ProfilePage() {
       .catch(() => {})
     
     // Fetch user statistics
-    fetch('/api/user/stats', {
+    fetch(`${API_BASE_URL}/api/user/stats`, {
       headers: { 'Authorization': `Bearer ${user.token}` }
     })
       .then(r => r.json())
@@ -90,7 +91,7 @@ export default function ProfilePage() {
     setSaving(true)
     setEditError('')
     try {
-      const res = await fetch('/api/user/profile', {
+      const res = await fetch(`${API_BASE_URL}/api/user/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -118,7 +119,7 @@ export default function ProfilePage() {
     }
     console.log('Fetching repos for github_url:', user.github_url)
     setReposLoading(true)
-    fetch('/api/user/github-repos', {
+    fetch(`${API_BASE_URL}/api/user/github-repos`, {
       headers: { 'Authorization': `Bearer ${user.token}` }
     })
       .then(r => {
@@ -315,7 +316,7 @@ export default function ProfilePage() {
                   </div>
                   <button className="btn-secondary" style={{ width: '100%', marginTop: 8, fontSize: 12 }}
                     onClick={async () => {
-                      const res = await fetch('/api/user/debug', {
+                      const res = await fetch(`${API_BASE_URL}/api/user/debug`, {
                         headers: { 'Authorization': `Bearer ${user.token}` }
                       })
                       const data = await res.json()
@@ -332,7 +333,7 @@ export default function ProfilePage() {
                     onClick={async () => {
                       const linkKey = 'gh_link_' + Date.now()
                       sessionStorage.setItem(linkKey, user.token)
-                      const res = await fetch(`/api/auth/github?state=${linkKey}`)
+                      const res = await fetch(`${API_BASE_URL}/api/auth/github?state=${linkKey}`)
                       const data = await res.json()
                       window.location.href = data.url
                     }}>
@@ -410,7 +411,7 @@ export default function ProfilePage() {
               <button className="btn-primary" onClick={async () => {
                 const linkKey = 'gh_link_' + Date.now()
                 sessionStorage.setItem(linkKey, user.token)
-                const res = await fetch(`/api/auth/github?state=${linkKey}`)
+                const res = await fetch(`${API_BASE_URL}/api/auth/github?state=${linkKey}`)
                 const data = await res.json()
                 window.location.href = data.url
               }}>

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import API_BASE_URL from '../config/api';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API_BASE = API_BASE_URL
 const STORAGE_KEY = 'oss_bookmarks'
 
 export function useBookmarks() {
