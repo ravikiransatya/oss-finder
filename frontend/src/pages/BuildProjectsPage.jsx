@@ -58,10 +58,10 @@ export default function BuildProjectsPage() {
   const handleKey = (e) => { if (e.key === 'Enter') ask() }
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 24px' }}>
+    <div style={{ maxWidth: 1200, margin: '0 auto', padding: 'clamp(24px, 5vw, 48px) clamp(16px, 4vw, 24px)' }}>
 
       {/* Header */}
-      <div style={{ marginBottom: 40, maxWidth: 640 }}>
+      <div style={{ marginBottom: 'clamp(24px, 5vw, 40px)', maxWidth: 640 }}>
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: 6,
           background: 'linear-gradient(135deg, #ebf2ff, #f0fff4)',
@@ -86,10 +86,10 @@ export default function BuildProjectsPage() {
         background: 'var(--surface)',
         border: '1px solid var(--border-soft)',
         borderRadius: 16,
-        padding: '20px',
+        padding: 'clamp(16px, 4vw, 20px)',
         marginBottom: 32,
       }}>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
+        <div className="prompt-container" style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
           <textarea
             value={prompt}
             onChange={e => setPrompt(e.target.value)}
@@ -119,7 +119,7 @@ export default function BuildProjectsPage() {
               e.target.style.boxShadow = 'none'
             }}
           />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="button-container" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <button
               className="btn-primary"
               onClick={() => ask()}
@@ -210,6 +210,22 @@ export default function BuildProjectsPage() {
           </div>
         </>
       )}
+      
+      <style>{`
+        @media (max-width: 640px) {
+          .prompt-container {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+          .button-container {
+            flex-direction: row !important;
+            width: 100% !important;
+          }
+          .button-container button {
+            flex: 1 !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

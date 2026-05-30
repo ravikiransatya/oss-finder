@@ -34,17 +34,16 @@ export default function Navbar() {
 
         {/* Logo */}
         <Link to="/" style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center',
-          textDecoration: 'none', flexShrink: 0, gap: 2,
+          display: 'flex', alignItems: 'center',
+          textDecoration: 'none', flexShrink: 0, gap: 8,
         }}>
-          <img src="/logo.png" alt="OSS Finder Logo" style={{ height: 38, width: 'auto', objectFit: 'contain' }} />
+          <img src="/logo.png" alt="OSS Finder Logo" style={{ height: 32, width: 'auto', objectFit: 'contain' }} />
           <span style={{
             fontFamily: 'var(--font-display)',
-            fontSize: 13,
+            fontSize: 16,
             fontWeight: 700,
-            letterSpacing: '0.08em',
+            letterSpacing: '0.05em',
             color: 'var(--text)',
-            textTransform: 'uppercase',
             lineHeight: 1,
           }}>
             OSS<span style={{ color: 'var(--brand)' }}>Finder</span>
